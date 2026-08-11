@@ -1,58 +1,183 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SchoolCanteen Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Backend untuk aplikasi **SchoolCanteen**, aplikasi e-commerce sekolah yang digunakan untuk pemesanan kantin dan koperasi sekolah.
 
-## About Laravel
+Backend dibuat menggunakan Laravel dan akan terhubung dengan Supabase untuk database dan authentication.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Tech Stack
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Laravel
+- PHP
+- Supabase PostgreSQL
+- Supabase Auth
+- Wasmer untuk deployment backend
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Menjalankan Project
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Clone repository:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone https://github.com/schoolcanteen-ecommers/SchoolCanteen-Backend.git
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Masuk ke folder project:
 
-## Contributing
+```bash
+cd SchoolCanteen-Backend
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Install dependency Laravel:
 
-## Code of Conduct
+```bash
+composer install
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Buat file `.env` dari `.env.example`:
 
-## Security Vulnerabilities
+```bash
+cp .env.example .env
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Generate application key:
 
-## License
+```bash
+php artisan key:generate
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Setelah itu isi konfigurasi yang dibutuhkan di file `.env`, terutama bagian database dan Supabase.
+
+Jalankan backend:
+
+```bash
+php artisan serve
+```
+
+Secara default backend berjalan di:
+
+```text
+http://127.0.0.1:8000
+```
+
+## Cek API
+
+Untuk memastikan backend berjalan, buka:
+
+```text
+http://127.0.0.1:8000/api/health
+```
+
+Response yang diharapkan:
+
+```json
+{
+  "success": true,
+  "message": "SchoolCanteen API is running",
+  "version": "v1"
+}
+```
+
+## Database
+
+Setelah koneksi Supabase PostgreSQL sudah dikonfigurasi di `.env`, migration dapat dijalankan dengan:
+
+```bash
+php artisan migrate
+```
+
+Untuk mengecek status migration:
+
+```bash
+php artisan migrate:status
+```
+
+Jika project sudah memiliki seeder, data awal dapat dimasukkan dengan:
+
+```bash
+php artisan db:seed
+```
+
+## Command yang Sering Dipakai
+
+Melihat semua route API:
+
+```bash
+php artisan route:list --path=api
+```
+
+Membersihkan cache config:
+
+```bash
+php artisan config:clear
+```
+
+Masuk ke Laravel Tinker:
+
+```bash
+php artisan tinker
+```
+
+Menjalankan server:
+
+```bash
+php artisan serve
+```
+
+## Git Workflow
+
+Branch utama:
+
+```text
+main
+develop
+```
+
+Untuk mulai mengerjakan fitur baru:
+
+```bash
+git checkout develop
+git pull origin develop
+git checkout -b feature/nama-fitur
+```
+
+Setelah fitur selesai:
+
+```bash
+git status
+git add .
+git commit -m "feat: nama fitur"
+git push -u origin feature/nama-fitur
+```
+
+Setelah itu buat Pull Request dari branch fitur ke `develop`.
+
+## Environment
+
+File `.env` tidak boleh di-push ke GitHub karena berisi credential dan konfigurasi penting.
+
+Gunakan:
+
+```text
+.env.example
+```
+
+sebagai contoh konfigurasi yang dibutuhkan oleh project.
+
+## Progress
+
+Progress pengerjaan backend disimpan di folder:
+
+```text
+docs/
+```
+
+Contoh:
+
+```text
+docs/progress-backend-day-1.md
+```
+
+## Deployment
+
+Backend SchoolCanteen akan dijalankan menggunakan **Wasmer**.
+
+Konfigurasi deployment akan ditambahkan setelah API dan koneksi database sudah siap untuk diuji secara online.
