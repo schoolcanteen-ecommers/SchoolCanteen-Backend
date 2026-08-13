@@ -1,9 +1,9 @@
 # Progress Backend SchoolCanteen - Day 2
 
-**Tanggal:** 12 Agustus 2026
-**Bagian:** Backend
-**Framework:** Laravel
-**OS:** Linux
+**Tanggal:** 12 Agustus 2026  
+**Bagian:** Backend  
+**Framework:** Laravel  
+**OS:** Linux  
 
 ## Yang Dikerjakan Hari Ini
 
@@ -75,13 +75,11 @@ Semua migration yang sudah dibuat berhasil dijalankan ke database menggunakan:
 php artisan migrate
 ```
 
-Hasil migration berhasil dan seluruh tabel yang dibuat sudah berstatus selesai.
+Semua migration berhasil dijalankan tanpa ada yang masih pending.
 
 ## Progress Git
 
 Progress database dibuat bertahap supaya riwayat commit lebih mudah dibaca.
-
-Progress utama hari ini sudah sampai pada:
 
 ```text
 feat(database): configure PostgreSQL environment
@@ -94,20 +92,19 @@ feat(database): tambah table keuangan dan penarikan merchant
 
 ## Status Saat Ini
 
-- [x] Setup Laravel
-- [x] API foundation
+- [x] Setup Laravel dan API awal
 - [x] Setup `.env`
-- [x] Konfigurasi PostgreSQL
-- [x] Migration profile
-- [x] Migration merchant dan katalog
-- [x] Migration order
-- [x] Migration wallet dan transaksi
-- [x] Migration keuangan merchant
-- [x] Menjalankan semua migration
-- [ ] Membuat model dan relationship
-- [ ] Membuat seeder
-- [ ] Membuat API produk dan merchant
+- [x] Menghubungkan Laravel ke Supabase PostgreSQL
+- [x] Membuat migration profile
+- [x] Membuat migration merchant dan katalog
+- [x] Membuat migration order dan order item
+- [x] Membuat migration wallet dan transaksi
+- [x] Membuat migration keuangan merchant
+- [x] Menjalankan seluruh migration
+- [ ] Membuat data demo dengan seeder
+- [ ] Membuat API produk
+- [ ] Membuat API merchant
 
 ## Next Step
 
-Selanjutnya saya akan membuat model Laravel dan relationship antar tabel, lalu dilanjutkan ke seeder dan API katalog.
+Selanjutnya saya akan membuat data demo menggunakan seeder, lalu mulai membuat API produk dan merchant agar data katalog bisa dites lewat backend.

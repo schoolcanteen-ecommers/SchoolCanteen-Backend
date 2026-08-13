@@ -10,6 +10,7 @@
 Hari ini saya mulai membuat backend untuk aplikasi **SchoolCanteen**.
 
 ### 1. Setup Project Laravel
+
 Saya membuat project Laravel baru di Linux dan memastikan project bisa dijalankan dengan:
 
 ```bash
@@ -23,6 +24,7 @@ http://127.0.0.1:8000
 ```
 
 ### 2. Setup GitHub
+
 Saya menghubungkan project backend lokal ke repository GitHub:
 
 ```text
@@ -32,6 +34,7 @@ schoolcanteen-ecommers/SchoolCanteen-Backend
 Setelah itu project mulai di-push secara bertahap supaya progress pengerjaan lebih mudah dilihat.
 
 ### 3. Membuat API Awal
+
 Saya membuat file:
 
 ```text
@@ -61,6 +64,7 @@ Response:
 ```
 
 ### 4. Setup `.env`
+
 Saya sudah mengatur file `.env` untuk kebutuhan backend dan database.
 
 File `.env` tidak akan di-push ke GitHub karena berisi data penting seperti password dan credential.
@@ -71,17 +75,18 @@ Saat membuat API, `routes/api.php` perlu didaftarkan terlebih dahulu di `bootstr
 
 Setelah diperbaiki, endpoint `/api/health` berhasil dijalankan.
 
-## Progress Saat Ini
+## Status Saat Ini
 
 - [x] Membuat project Laravel
 - [x] Menjalankan Laravel di Linux
 - [x] Menghubungkan project ke GitHub
 - [x] Membuat `routes/api.php`
+- [x] Mendaftarkan API route di `bootstrap/app.php`
 - [x] Membuat endpoint `/api/health`
 - [x] Setup `.env`
 - [ ] Menghubungkan Laravel ke Supabase PostgreSQL
-- [ ] Membuat tabel database
-- [ ] Membuat model
+- [ ] Membuat migration database SchoolCanteen
+- [ ] Membuat data demo
 - [ ] Membuat API produk dan merchant
 
 ## Next Step

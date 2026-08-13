@@ -1,7 +1,9 @@
 # Progress Backend SchoolCanteen - Day 3
 
 **Tanggal:** 13 Agustus 2026  
-**Bagian:** Backend
+**Bagian:** Backend  
+**Framework:** Laravel  
+**OS:** Linux  
 
 ## Yang Dikerjakan Hari Ini
 
@@ -11,7 +13,7 @@ Hari ini saya melanjutkan backend SchoolCanteen dari bagian database ke data awa
 
 Saya membuat seeder untuk mengisi data awal SchoolCanteen.
 
-Data demo ini digunakan supaya API bisa langsung dites tanpa harus memasukkan data satu per satu dari database.
+Data demo digunakan supaya API bisa langsung dites tanpa harus memasukkan data satu per satu dari database.
 
 Commit:
 
@@ -23,28 +25,28 @@ feat(seed): tambah data demo SchoolCanteen
 
 Saya membuat API untuk menampilkan daftar produk dan detail produk.
 
-Endpoint yang dibuat:
+Endpoint:
 
 ```text
 GET /api/v1/products
 GET /api/v1/products/{product}
 ```
 
-Saya juga membuat `ProductController` dan `ProductResource` supaya data produk yang dikirim lewat API lebih rapi.
+Saya juga membuat `ProductController` dan `ProductResource` untuk mengatur data produk yang dikirim lewat API.
 
-Route kemudian dicek menggunakan:
+Route dicek menggunakan:
 
 ```bash
 php artisan route:list --path=api/v1/products
 ```
 
-Hasil akhirnya kedua route produk sudah berhasil terbaca.
+Hasil akhirnya kedua route produk berhasil terbaca.
 
 ### 3. Membuat Merchant API
 
 Setelah Product API berjalan, saya lanjut membuat API merchant.
 
-Endpoint yang dibuat:
+Endpoint:
 
 ```text
 GET /api/v1/merchants
@@ -64,7 +66,7 @@ Route dicek menggunakan:
 php artisan route:list --path=api/v1/merchant
 ```
 
-Hasil akhirnya route daftar merchant dan detail merchant sudah berhasil terbaca.
+Hasil akhirnya route daftar merchant dan detail merchant berhasil terbaca.
 
 ## Kendala Hari Ini
 
@@ -82,7 +84,7 @@ dan:
 git add app/http
 ```
 
-Di Linux nama folder bersifat case-sensitive. Folder Laravel yang benar adalah:
+Di Linux nama folder bersifat case-sensitive. Folder yang benar adalah:
 
 ```text
 app/Models
@@ -93,48 +95,38 @@ Setelah path diperbaiki, file bisa ditambahkan ke commit.
 
 ### 2. ProductController Tidak Ditemukan
 
-Saat mengecek route dengan:
+Saat mengecek route:
 
 ```bash
 php artisan route:list --path=api/v1/products
 ```
 
-sempat muncul error:
+sempat muncul:
 
 ```text
 ReflectionException
 Class "ProductController" does not exist
 ```
 
-Masalah diperbaiki dengan mengecek kembali controller, namespace, import, dan route pada `api.php`.
+Saya mengecek kembali controller, namespace, import, dan route pada `api.php`.
 
-Setelah diperbaiki, route produk berhasil muncul:
-
-```text
-GET|HEAD api/v1/products
-GET|HEAD api/v1/products/{product}
-```
+Setelah diperbaiki, route produk berhasil terbaca.
 
 ### 3. MerchantController Tidak Ditemukan
 
-Setelah itu sempat muncul error:
+Setelah itu sempat muncul:
 
 ```text
 Class "App\Http\Controllers\Api\V1\MerchantController" does not exist
 ```
 
-Controller merchant sebelumnya belum berada pada lokasi atau namespace yang sesuai dengan route.
+Saya memperbaiki lokasi controller dan namespace yang digunakan oleh route.
 
-Setelah diperbaiki, route merchant berhasil terbaca:
-
-```text
-GET|HEAD api/v1/merchants
-GET|HEAD api/v1/merchants/{merchant}
-```
+Setelah itu route merchant berhasil terbaca.
 
 ## Progress Git Hari Ini
 
-Beberapa commit yang dibuat selama pengerjaan:
+Beberapa commit yang dibuat:
 
 ```text
 feat(seed): tambah data demo SchoolCanteen
@@ -152,22 +144,21 @@ develop
 
 ## Status Saat Ini
 
-- [x] Setup Laravel
-- [x] API foundation
-- [x] Koneksi PostgreSQL
+- [x] Setup Laravel dan API awal
+- [x] Koneksi Supabase PostgreSQL
 - [x] Semua migration database
 - [x] Seeder data demo
-- [x] Product API
-- [x] Product Resource
-- [x] Merchant API
-- [x] Merchant Resource
-- [x] Route produk berhasil dites
-- [x] Route merchant berhasil dites
-- [ ] Filter dan pagination katalog
-- [ ] Supabase Authentication
-- [ ] Role Authorization
-- [ ] Student Wallet API
+- [x] Membuat Product API
+- [x] Membuat Product Resource
+- [x] Route daftar dan detail produk berhasil dites
+- [x] Membuat Merchant API
+- [x] Membuat Merchant Resource
+- [x] Route daftar dan detail merchant berhasil dites
+- [ ] Menambahkan filter dan pagination katalog
+- [ ] Membuat Supabase Authentication
+- [ ] Membuat Role Authorization
+- [ ] Membuat Student Wallet API
 
 ## Next Step
 
-Selanjutnya saya akan melanjutkan API katalog dengan filter dan pagination, lalu masuk ke integrasi Supabase Authentication untuk endpoint yang membutuhkan login.
+Selanjutnya saya akan melanjutkan API katalog dengan filter dan pagination. Setelah katalog selesai, pengerjaan dilanjutkan ke Supabase Authentication untuk endpoint yang membutuhkan login.
