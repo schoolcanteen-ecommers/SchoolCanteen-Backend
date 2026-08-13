@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\MerchantController;
 use App\Http\Controllers\Api\V1\Student\OrderController;
 use App\Http\Controllers\Api\V1\Student\WalletController;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +30,16 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/products/{product}', [
         ProductController::class,
+        'show',
+    ]);
+
+        Route::get('/merchants', [
+        MerchantController::class,
+        'index',
+    ]);
+
+    Route::get('/merchants/{merchant}', [
+        MerchantController::class,
         'show',
     ]);
 
