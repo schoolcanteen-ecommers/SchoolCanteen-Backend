@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\MerchantController;
+use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\Student\OrderController;
 use App\Http\Controllers\Api\V1\Student\WalletController;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +23,17 @@ Route::get('/health', function () {
 Route::prefix('v1')->group(function () {
 
     /* Public API */
+
+        Route::get('/products', [
+        ProductController::class,
+        'index',
+    ]);
+
+    Route::get('/products/{product}', [
+        ProductController::class,
+        'show',
+    ]);
+
 
     Route::get('/products', [
         ProductController::class,
