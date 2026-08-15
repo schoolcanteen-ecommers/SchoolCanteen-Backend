@@ -59,6 +59,45 @@ Route::prefix('v1')->group(function () {
     Route::middleware('supabase.auth')
     ->group(function () {
 
+        Route::prefix('student')
+            ->middleware('role:student')
+            ->group(function () {
+
+                Route::get('/test', function () {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Student access granted.',
+                    ]);
+                });
+
+            });
+
+        Route::prefix('merchant')
+            ->middleware('role:merchant')
+            ->group(function () {
+
+                Route::get('/test', function () {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Merchant access granted.',
+                    ]);
+                });
+
+            });
+
+        Route::prefix('admin')
+            ->middleware('role:admin')
+            ->group(function () {
+
+        Route::get('/test', function () {
+            return response()->json([
+                'success' => true,
+                'message' => 'Admin access granted.',
+            ]);
+        });
+
+    });
+
         Route::get('/me', function (Request $request) {
 
             $profile =
