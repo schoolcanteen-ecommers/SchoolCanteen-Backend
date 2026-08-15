@@ -25,17 +25,6 @@ Route::prefix('v1')->group(function () {
 
     /* Public API */
 
-        Route::get('/products', [
-        ProductController::class,
-        'index',
-    ]);
-
-    Route::get('/products/{product}', [
-        ProductController::class,
-        'show',
-    ]);
-
-
     Route::get('/products', [
         ProductController::class,
         'index',
@@ -46,7 +35,7 @@ Route::prefix('v1')->group(function () {
         'show',
     ]);
 
-        Route::get('/merchants', [
+    Route::get('/merchants', [
         MerchantController::class,
         'index',
     ]);
@@ -56,65 +45,81 @@ Route::prefix('v1')->group(function () {
         'show',
     ]);
 
+
+    /* Authenticated API */
+
     Route::middleware('supabase.auth')
-    ->group(function () {
+        ->group(function () {
 
-        Route::prefix('student')
-            ->middleware('role:student')
-            ->group(function () {
+            /* Student */
 
-                Route::get('/test', function () {
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Student access granted.',
+            Route::prefix('student')
+                ->middleware('role:student')
+                ->group(function () {
+
+                    Route::get('/wallet', [
+                        WalletController::class,
+                        'show',
                     ]);
+
+                    Route::get('/wallet/transactions', [
+                        WalletController::class,
+                        'transactions',
+                    ]);
+
                 });
 
-            });
 
-        Route::prefix('merchant')
-            ->middleware('role:merchant')
-            ->group(function () {
+            /* Merchant */
 
-                Route::get('/test', function () {
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Merchant access granted.',
-                    ]);
+            Route::prefix('merchant')
+                ->middleware('role:merchant')
+                ->group(function () {
+
+                    Route::get('/test', function () {
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Merchant access granted.',
+                        ]);
+                    });
+
                 });
 
+
+            /* Admin */
+
+            Route::prefix('admin')
+                ->middleware('role:admin')
+                ->group(function () {
+
+                    Route::get('/test', function () {
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Admin access granted.',
+                        ]);
+                    });
+
+                });
+
+
+            /* Current User */
+
+            Route::get('/me', function (Request $request) {
+
+                $profile = $request->attributes->get('profile');
+
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'id' => $profile->id,
+                        'name' => $profile->name,
+                        'phone' => $profile->phone,
+                        'avatar_url' => $profile->avatar_url,
+                        'role' => $profile->role,
+                    ],
+                ]);
             });
 
-        Route::prefix('admin')
-            ->middleware('role:admin')
-            ->group(function () {
-
-        Route::get('/test', function () {
-            return response()->json([
-                'success' => true,
-                'message' => 'Admin access granted.',
-            ]);
         });
-
-    });
-
-        Route::get('/me', function (Request $request) {
-
-            $profile =
-                $request->attributes->get('profile');
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'id' => $profile->id,
-                    'name' => $profile->name,
-                    'phone' => $profile->phone,
-                    'avatar_url' => $profile->avatar_url,
-                    'role' => $profile->role,
-                ],
-            ]);
-        });
-
-    });
 
 });
