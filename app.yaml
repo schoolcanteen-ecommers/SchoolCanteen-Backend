@@ -1,0 +1,5 @@
+name: SchoolCanteen-Backend
+app_id: da_RbxI9tgUzQlO
+owner: gyfrans
+package: .
+kind: wasmer.io/App.v0
