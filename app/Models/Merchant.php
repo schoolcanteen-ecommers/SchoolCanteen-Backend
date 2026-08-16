@@ -62,4 +62,9 @@ class Merchant extends Model
     {
         return $this->hasOne(MerchantWallet::class);
     }
+
+    public function paymentAccounts(): HasMany
+    {
+        return $this->hasMany(MerchantPaymentAccount::class);
+    }
 }
