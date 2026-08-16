@@ -4,9 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
+
+    use SoftDeletes;
+
     protected $table = 'products';
 
     protected $keyType = 'string';
@@ -22,6 +26,7 @@ class Product extends Model
         'price',
         'stock',
         'image_url',
+        'image_public_id',
         'is_active',
     ];
 
