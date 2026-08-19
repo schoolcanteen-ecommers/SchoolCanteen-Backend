@@ -228,6 +228,7 @@ class OrderController extends Controller
                     'model' => $product,
                     'product_id' => $product->id,
                     'product_name' => $product->name,
+                    'product_image_url' => $product->image_url,
                     'unit_price' => $product->price,
                     'quantity' => $item['quantity'],
                     'subtotal' => $subtotal,
@@ -332,6 +333,8 @@ class OrderController extends Controller
                 $orderItem->order_id = $order->id;
                 $orderItem->product_id = $item['product_id'];
                 $orderItem->product_name = $item['product_name'];
+                $orderItem->product_image_url =
+                    $item['product_image_url'];
                 $orderItem->unit_price = $item['unit_price'];
                 $orderItem->quantity = $item['quantity'];
                 $orderItem->subtotal = $item['subtotal'];
@@ -451,6 +454,8 @@ class OrderController extends Controller
                     ->map(fn ($item) => [
                         'product_id' => $item['product_id'],
                         'product_name' => $item['product_name'],
+                        'product_image_url' =>
+                            $item['product_image_url'],
                         'unit_price' => $item['unit_price'],
                         'quantity' => $item['quantity'],
                         'subtotal' => $item['subtotal'],
