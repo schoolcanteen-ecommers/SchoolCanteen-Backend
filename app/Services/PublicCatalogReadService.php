@@ -69,6 +69,37 @@ class PublicCatalogReadService
                 'c.id as category_id',
                 'c.name as category_name',
                 'c.slug as category_slug',
+
+                DB::raw(
+                    'EXISTS (
+                        SELECT 1
+                        FROM product_modifier_groups pmg
+                        WHERE pmg.product_id = p.id
+                          AND pmg.is_active = TRUE
+                          AND EXISTS (
+                              SELECT 1
+                              FROM product_modifier_options pmo
+                              WHERE pmo.modifier_group_id = pmg.id
+                                AND pmo.is_active = TRUE
+                          )
+                    ) AS product_has_modifiers'
+                ),
+
+                DB::raw(
+                    'EXISTS (
+                        SELECT 1
+                        FROM product_modifier_groups pmg
+                        WHERE pmg.product_id = p.id
+                          AND pmg.is_active = TRUE
+                          AND pmg.is_required = TRUE
+                          AND EXISTS (
+                              SELECT 1
+                              FROM product_modifier_options pmo
+                              WHERE pmo.modifier_group_id = pmg.id
+                                AND pmo.is_active = TRUE
+                          )
+                    ) AS product_requires_customization'
+                ),
             ])
             ->selectRaw(
                 'ROW_NUMBER() OVER (
@@ -198,6 +229,37 @@ class PublicCatalogReadService
                 'c.id as category_id',
                 'c.name as category_name',
                 'c.slug as category_slug',
+
+                DB::raw(
+                    'EXISTS (
+                        SELECT 1
+                        FROM product_modifier_groups pmg
+                        WHERE pmg.product_id = p.id
+                          AND pmg.is_active = TRUE
+                          AND EXISTS (
+                              SELECT 1
+                              FROM product_modifier_options pmo
+                              WHERE pmo.modifier_group_id = pmg.id
+                                AND pmo.is_active = TRUE
+                          )
+                    ) AS product_has_modifiers'
+                ),
+
+                DB::raw(
+                    'EXISTS (
+                        SELECT 1
+                        FROM product_modifier_groups pmg
+                        WHERE pmg.product_id = p.id
+                          AND pmg.is_active = TRUE
+                          AND pmg.is_required = TRUE
+                          AND EXISTS (
+                              SELECT 1
+                              FROM product_modifier_options pmo
+                              WHERE pmo.modifier_group_id = pmg.id
+                                AND pmo.is_active = TRUE
+                          )
+                    ) AS product_requires_customization'
+                ),
             ])
             ->get();
 
@@ -338,6 +400,16 @@ class PublicCatalogReadService
             'is_active' =>
                 $this->toBoolean(
                     $row->product_is_active
+                ),
+
+            'has_modifiers' =>
+                $this->toBoolean(
+                    $row->product_has_modifiers
+                ),
+
+            'requires_customization' =>
+                $this->toBoolean(
+                    $row->product_requires_customization
                 ),
 
             'merchant' => [

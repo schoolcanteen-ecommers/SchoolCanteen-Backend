@@ -32,6 +32,7 @@ class PublicCatalogTest extends TestCase
         parent::setUp();
 
         $this->createTestSchema();
+        $this->createModifierSchema();
         $this->seedTestData();
     }
 
@@ -110,6 +111,92 @@ class PublicCatalogTest extends TestCase
                     ->default(true);
 
                 $table->softDeletes();
+                $table->timestamps();
+            }
+        );
+    }
+
+    private function createModifierSchema(): void
+    {
+        Schema::dropIfExists(
+            'product_modifier_options'
+        );
+
+        Schema::dropIfExists(
+            'product_modifier_groups'
+        );
+
+        Schema::create(
+            'product_modifier_groups',
+            function (Blueprint $table) {
+                $table->uuid('id')
+                    ->primary();
+
+                $table->uuid(
+                    'product_id'
+                );
+
+                $table->string(
+                    'name',
+                    100
+                );
+
+                $table->string(
+                    'selection_type',
+                    20
+                )->default('single');
+
+                $table->boolean(
+                    'is_required'
+                )->default(false);
+
+                $table->unsignedSmallInteger(
+                    'min_select'
+                )->default(0);
+
+                $table->unsignedSmallInteger(
+                    'max_select'
+                )->default(1);
+
+                $table->unsignedSmallInteger(
+                    'sort_order'
+                )->default(0);
+
+                $table->boolean(
+                    'is_active'
+                )->default(true);
+
+                $table->timestamps();
+            }
+        );
+
+        Schema::create(
+            'product_modifier_options',
+            function (Blueprint $table) {
+                $table->uuid('id')
+                    ->primary();
+
+                $table->uuid(
+                    'modifier_group_id'
+                );
+
+                $table->string(
+                    'name',
+                    100
+                );
+
+                $table->unsignedBigInteger(
+                    'price_delta'
+                )->default(0);
+
+                $table->unsignedSmallInteger(
+                    'sort_order'
+                )->default(0);
+
+                $table->boolean(
+                    'is_active'
+                )->default(true);
+
                 $table->timestamps();
             }
         );

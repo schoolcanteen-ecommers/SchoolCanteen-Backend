@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-
     use SoftDeletes;
 
     protected $table = 'products';
@@ -41,11 +41,26 @@ class Product extends Model
 
     public function merchant(): BelongsTo
     {
-        return $this->belongsTo(Merchant::class);
+        return $this->belongsTo(
+            Merchant::class
+        );
     }
 
     public function category(): BelongsTo
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(
+            Category::class
+        );
+    }
+
+    public function modifierGroups(): HasMany
+    {
+        return $this
+            ->hasMany(
+                ProductModifierGroup::class,
+                'product_id'
+            )
+            ->orderBy('sort_order')
+            ->orderBy('id');
     }
 }
