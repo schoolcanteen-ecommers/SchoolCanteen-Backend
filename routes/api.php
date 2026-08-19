@@ -61,6 +61,11 @@ Route::prefix('v1')->group(function () {
         'index',
     ]);
 
+    Route::post('/products/resolve', [
+        ProductController::class,
+        'resolve',
+    ]);
+
     Route::get('/products/{product}', [
         ProductController::class,
         'show',
@@ -142,7 +147,12 @@ Route::prefix('v1')->group(function () {
                 'store',
             ]);
 
-
+                Route::get('/test', function () {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Student access granted.',
+                    ]);
+                });
 
                 Route::get('/wallet', [
                     WalletController::class,
@@ -261,7 +271,12 @@ Route::prefix('v1')->group(function () {
                     'destroy',
                 ])->whereUuid('product');
 
-
+                Route::get('/test', function () {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Merchant access granted.',
+                    ]);
+                });
             });
 
 
@@ -360,7 +375,12 @@ Route::prefix('v1')->group(function () {
                     'summary',
                 ]);
 
-
+                Route::get('/test', function () {
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Admin access granted.',
+                    ]);
+                });
             });
     });
 });

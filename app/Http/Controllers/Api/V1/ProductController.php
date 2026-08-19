@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\ResolveProductsRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
@@ -71,6 +73,79 @@ class ProductController extends Controller
             ->paginate(12);
 
         return ProductResource::collection($products);
+    }
+
+    public function resolve(ResolveProductsRequest $request)
+    {
+        $requestedIds = collect(
+            $request->validated('product_ids')
+        )->values();
+
+        $validUuidIds = $requestedIds
+            ->filter(
+                fn ($id) => Str::isUuid($id)
+            )
+            ->values();
+
+        $products = Product::query()
+            ->with([
+                'merchant',
+                'category',
+            ])
+            ->whereIn(
+                'id',
+                $validUuidIds
+            )
+            ->where(
+                'is_active',
+                true
+            )
+            ->whereHas(
+                'merchant',
+                function ($query) {
+                    $query->where(
+                        'is_active',
+                        true
+                    );
+                }
+            )
+            ->get()
+            ->keyBy('id');
+
+        $resolvedProducts =
+            $requestedIds
+                ->map(
+                    fn ($id) =>
+                    $products->get($id)
+                )
+                ->filter()
+                ->values();
+
+        $unavailableProductIds =
+            $requestedIds
+                ->reject(
+                    fn ($id) =>
+                    $products->has($id)
+                )
+                ->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'products' =>
+                    $resolvedProducts
+                        ->map(
+                            fn (Product $product) =>
+                            (new ProductResource(
+                                $product
+                            ))->resolve($request)
+                        )
+                        ->values(),
+
+                'unavailable_product_ids' =>
+                    $unavailableProductIds,
+            ],
+        ]);
     }
 
     public function show(Product $product)
