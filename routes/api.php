@@ -18,6 +18,8 @@ use App\Http\Controllers\Api\V1\Merchant\WalletController as MerchantWalletContr
 use App\Http\Controllers\Api\V1\Merchant\PaymentAccountController as MerchantPaymentAccountController;
 use App\Http\Controllers\Api\V1\Merchant\WithdrawalController as MerchantWithdrawalController;
 use App\Http\Controllers\Api\V1\Merchant\ProductController as MerchantProductController;
+use App\Http\Controllers\Api\V1\Merchant\ProductModifierGroupController as MerchantProductModifierGroupController;
+use App\Http\Controllers\Api\V1\Merchant\ProductModifierOptionController as MerchantProductModifierOptionController;
 use App\Http\Controllers\Api\V1\Merchant\CategoryController as MerchantCategoryController;
 use App\Http\Controllers\Api\V1\Student\DashboardController as StudentDashboardController;
 use App\Http\Controllers\Api\V1\Student\ProfileController as StudentProfileController;
@@ -169,6 +171,11 @@ Route::prefix('v1')->group(function () {
                     'show',
                 ]);
 
+                Route::get('/wallet/overview', [
+                    WalletController::class,
+                    'overview',
+                ]);
+
                 Route::get('/wallet/transactions', [
                     WalletController::class,
                     'transactions',
@@ -182,6 +189,11 @@ Route::prefix('v1')->group(function () {
             Route::get('/profile', [
                 StudentProfileController::class,
                 'show',
+            ]);
+
+            Route::patch('/profile', [
+                StudentProfileController::class,
+                'update',
             ]);
 
             Route::post('/wallet/top-ups', [
@@ -265,6 +277,80 @@ Route::prefix('v1')->group(function () {
                     MerchantProductController::class,
                     'store',
                 ]);
+
+                /*
+                |--------------------------------------------------------------------------
+                | Product Modifiers
+                |--------------------------------------------------------------------------
+                */
+
+                Route::get(
+                    '/products/{product}/modifiers',
+                    [
+                        MerchantProductModifierGroupController::class,
+                        'index',
+                    ]
+                )->whereUuid('product');
+
+                Route::post(
+                    '/products/{product}/modifiers',
+                    [
+                        MerchantProductModifierGroupController::class,
+                        'store',
+                    ]
+                )->whereUuid('product');
+
+                Route::patch(
+                    '/products/{product}/modifiers/{modifier}',
+                    [
+                        MerchantProductModifierGroupController::class,
+                        'update',
+                    ]
+                )
+                    ->whereUuid('product')
+                    ->whereUuid('modifier');
+
+                Route::delete(
+                    '/products/{product}/modifiers/{modifier}',
+                    [
+                        MerchantProductModifierGroupController::class,
+                        'destroy',
+                    ]
+                )
+                    ->whereUuid('product')
+                    ->whereUuid('modifier');
+
+                Route::post(
+                    '/products/{product}/modifiers/{modifier}/options',
+                    [
+                        MerchantProductModifierOptionController::class,
+                        'store',
+                    ]
+                )
+                    ->whereUuid('product')
+                    ->whereUuid('modifier');
+
+                Route::patch(
+                    '/products/{product}/modifiers/{modifier}/options/{option}',
+                    [
+                        MerchantProductModifierOptionController::class,
+                        'update',
+                    ]
+                )
+                    ->whereUuid('product')
+                    ->whereUuid('modifier')
+                    ->whereUuid('option');
+
+                Route::delete(
+                    '/products/{product}/modifiers/{modifier}/options/{option}',
+                    [
+                        MerchantProductModifierOptionController::class,
+                        'destroy',
+                    ]
+                )
+                    ->whereUuid('product')
+                    ->whereUuid('modifier')
+                    ->whereUuid('option');
 
                 Route::get('/categories', [
                     MerchantCategoryController::class,
