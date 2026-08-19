@@ -12,6 +12,9 @@ use App\Models\MerchantWallet;
 use App\Models\MerchantWalletTransaction;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderItemModifier;
+use App\Models\ProductModifierGroup;
+use App\Models\ProductModifierOption;
 use App\Models\Pickup;
 use App\Models\PickupSlot;
 use App\Models\Product;
@@ -33,7 +36,7 @@ class OrderController extends Controller
                 'merchant',
                 'pickupSlot',
                 'pickup',
-                'items',
+                'items.modifiers',
                 'escrow',
             ])
             ->latest()
@@ -56,7 +59,7 @@ class OrderController extends Controller
                 'merchant',
                 'pickupSlot',
                 'pickup',
-                'items',
+                'items.modifiers',
                 'escrow',
             ])
             ->first();
@@ -172,25 +175,71 @@ class OrderController extends Controller
 
             /*
             |--------------------------------------------------------------------------
-            | Products
+            | Products + Aggregate Stock
             |--------------------------------------------------------------------------
             */
 
-            $productIds = collect($data['items'])
+            /*
+             * Product yang sama dapat muncul
+             * sebagai beberapa order line.
+             *
+             * Lock tetap dilakukan hanya satu
+             * kali per unique product dan selalu
+             * dalam urutan ID deterministic.
+             */
+            $productIds = collect(
+                $data['items']
+            )
                 ->pluck('product_id')
+                ->unique()
+                ->sort()
+                ->values()
                 ->all();
 
+            /*
+             * Quantity harus digabung per product
+             * sebelum stock validation.
+             *
+             * Contoh:
+             *
+             * Mie Pedas       x2
+             * Mie Tidak Pedas x2
+             *
+             * requested stock Mie = 4.
+             */
+            $requestedQuantities = collect(
+                $data['items']
+            )
+                ->groupBy('product_id')
+                ->map(
+                    fn ($lines) =>
+                        (int)
+                        $lines->sum(
+                            'quantity'
+                        )
+                );
+
             $products = Product::query()
-                ->whereIn('id', $productIds)
+                ->whereIn(
+                    'id',
+                    $productIds
+                )
+                ->orderBy('id')
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('id');
 
-            $resolvedItems = [];
-            $totalAmount = 0;
-
-            foreach ($data['items'] as $item) {
-                $product = $products->get($item['product_id']);
+            /*
+             * Validate product + aggregate stock
+             * sekali per unique product.
+             */
+            foreach (
+                $productIds as $productId
+            ) {
+                $product =
+                    $products->get(
+                        $productId
+                    );
 
                 if (!$product) {
                     $this->fail(
@@ -200,7 +249,10 @@ class OrderController extends Controller
                     );
                 }
 
-                if ($product->merchant_id !== $merchant->id) {
+                if (
+                    $product->merchant_id
+                    !== $merchant->id
+                ) {
                     $this->fail(
                         'DIFFERENT_MERCHANT',
                         'Semua produk harus berasal dari merchant yang sama.'
@@ -214,24 +266,462 @@ class OrderController extends Controller
                     );
                 }
 
-                if ($product->stock < $item['quantity']) {
+                $requestedQuantity =
+                    (int)
+                    $requestedQuantities
+                        ->get(
+                            $productId,
+                            0
+                        );
+
+                if (
+                    $product->stock
+                    < $requestedQuantity
+                ) {
                     $this->fail(
                         'INSUFFICIENT_STOCK',
-                        "Stok {$product->name} tidak mencukupi."
+                        "Stok {$product->name} telah berubah dan tidak mencukupi.",
+                        409,
+                        [
+                            'product_id' =>
+                                $product->id,
+
+                            'product_name' =>
+                                $product->name,
+
+                            'requested_quantity' =>
+                                $requestedQuantity,
+
+                            'available_quantity' =>
+                                (int)
+                                $product->stock,
+                        ]
+                    );
+                }
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Modifier Configuration Locks
+            |--------------------------------------------------------------------------
+            |
+            | Semua konfigurasi modifier untuk
+            | product checkout dikunci setelah
+            | product rows.
+            |
+            | Lock order:
+            |
+            | products
+            | -> modifier groups
+            | -> modifier options
+            |
+            */
+
+            $modifierGroups =
+                ProductModifierGroup::query()
+                    ->whereIn(
+                        'product_id',
+                        $productIds
+                    )
+                    ->orderBy(
+                        'product_id'
+                    )
+                    ->orderBy('id')
+                    ->lockForUpdate()
+                    ->get();
+
+            $modifierGroupIds =
+                $modifierGroups
+                    ->pluck('id')
+                    ->sort()
+                    ->values()
+                    ->all();
+
+            $modifierOptions =
+                $modifierGroupIds === []
+                    ? collect()
+                    : ProductModifierOption::query()
+                        ->whereIn(
+                            'modifier_group_id',
+                            $modifierGroupIds
+                        )
+                        ->orderBy(
+                            'modifier_group_id'
+                        )
+                        ->orderBy('id')
+                        ->lockForUpdate()
+                        ->get();
+
+            $groupsByProduct =
+                $modifierGroups
+                    ->groupBy(
+                        'product_id'
+                    );
+
+            $optionsByGroup =
+                $modifierOptions
+                    ->groupBy(
+                        'modifier_group_id'
+                    );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Resolve Order Lines
+            |--------------------------------------------------------------------------
+            */
+
+            $resolvedItems = [];
+            $totalAmount = 0;
+
+            foreach (
+                $data['items'] as $item
+            ) {
+                $product =
+                    $products->get(
+                        $item['product_id']
+                    );
+
+                $productGroups =
+                    $groupsByProduct->get(
+                        $product->id,
+                        collect()
+                    );
+
+                $productGroupIds =
+                    $productGroups
+                        ->pluck('id')
+                        ->all();
+
+                $productOptions =
+                    $modifierOptions
+                        ->whereIn(
+                            'modifier_group_id',
+                            $productGroupIds
+                        )
+                        ->keyBy('id');
+
+                $selectedOptionIds =
+                    collect(
+                        $item[
+                            'modifier_option_ids'
+                        ] ?? []
+                    )->values();
+
+                $selectedOptions =
+                    collect();
+
+                /*
+                 * Pertama validasi bahwa setiap
+                 * option benar-benar berada pada
+                 * product ini dan masih usable.
+                 */
+                foreach (
+                    $selectedOptionIds
+                    as $selectedOptionId
+                ) {
+                    $option =
+                        $productOptions->get(
+                            $selectedOptionId
+                        );
+
+                    if (!$option) {
+                        $this->fail(
+                            'MODIFIER_OPTION_INVALID',
+                            "Pilihan untuk {$product->name} tidak valid.",
+                            409,
+                            [
+                                'product_id' =>
+                                    $product->id,
+
+                                'modifier_option_id' =>
+                                    $selectedOptionId,
+                            ]
+                        );
+                    }
+
+                    $group =
+                        $productGroups
+                            ->firstWhere(
+                                'id',
+                                $option
+                                    ->modifier_group_id
+                            );
+
+                    if (
+                        !$group
+                        || !$group->is_active
+                        || !$option->is_active
+                    ) {
+                        $this->fail(
+                            'MODIFIER_OPTION_UNAVAILABLE',
+                            "Salah satu pilihan untuk {$product->name} sudah tidak tersedia.",
+                            409,
+                            [
+                                'product_id' =>
+                                    $product->id,
+
+                                'modifier_group_id' =>
+                                    $group?->id,
+
+                                'modifier_group_name' =>
+                                    $group?->name,
+
+                                'modifier_option_id' =>
+                                    $selectedOptionId,
+                            ]
+                        );
+                    }
+
+                    $selectedOptions->push(
+                        $option
                     );
                 }
 
-                $subtotal = $product->price * $item['quantity'];
-                $totalAmount += $subtotal;
+                $modifierSnapshots = [];
+                $modifierDelta = 0;
+
+                /*
+                 * Kemudian validate selection
+                 * rule setiap active group.
+                 */
+                foreach (
+                    $productGroups
+                    as $group
+                ) {
+                    if (!$group->is_active) {
+                        continue;
+                    }
+
+                    $groupOptions =
+                        $optionsByGroup->get(
+                            $group->id,
+                            collect()
+                        );
+
+                    $activeOptions =
+                        $groupOptions
+                            ->where(
+                                'is_active',
+                                true
+                            )
+                            ->values();
+
+                    if (
+                        $group->selection_type
+                        === 'single'
+                    ) {
+                        $minimum =
+                            $group->is_required
+                                ? 1
+                                : 0;
+
+                        $maximum = 1;
+                    } else {
+                        $minimum =
+                            $group->is_required
+                                ? max(
+                                    1,
+                                    (int)
+                                    $group
+                                        ->min_select
+                                )
+                                : 0;
+
+                        $maximum =
+                            max(
+                                $minimum,
+                                (int)
+                                $group
+                                    ->max_select,
+                                1
+                            );
+                    }
+
+                    /*
+                     * Required group yang tidak
+                     * memiliki cukup active option
+                     * adalah invalid merchant
+                     * configuration.
+                     */
+                    if (
+                        $group->is_required
+                        && $activeOptions->count()
+                            < $minimum
+                    ) {
+                        $this->fail(
+                            'MODIFIER_CONFIGURATION_UNAVAILABLE',
+                            "Pilihan wajib untuk {$product->name} sedang tidak tersedia.",
+                            409,
+                            [
+                                'product_id' =>
+                                    $product->id,
+
+                                'modifier_group_id' =>
+                                    $group->id,
+
+                                'modifier_group_name' =>
+                                    $group->name,
+
+                                'min_select' =>
+                                    $minimum,
+
+                                'active_options_count' =>
+                                    $activeOptions
+                                        ->count(),
+                            ]
+                        );
+                    }
+
+                    $selectedForGroup =
+                        $selectedOptions
+                            ->where(
+                                'modifier_group_id',
+                                $group->id
+                            )
+                            ->values();
+
+                    $selectedCount =
+                        $selectedForGroup
+                            ->count();
+
+                    if (
+                        $selectedCount
+                        < $minimum
+                    ) {
+                        $this->fail(
+                            'MODIFIER_SELECTION_REQUIRED',
+                            "Pilihan {$group->name} untuk {$product->name} belum lengkap.",
+                            409,
+                            [
+                                'product_id' =>
+                                    $product->id,
+
+                                'modifier_group_id' =>
+                                    $group->id,
+
+                                'modifier_group_name' =>
+                                    $group->name,
+
+                                'selected_count' =>
+                                    $selectedCount,
+
+                                'min_select' =>
+                                    $minimum,
+
+                                'max_select' =>
+                                    $maximum,
+                            ]
+                        );
+                    }
+
+                    if (
+                        $selectedCount
+                        > $maximum
+                    ) {
+                        $this->fail(
+                            'MODIFIER_SELECTION_INVALID',
+                            "Pilihan {$group->name} untuk {$product->name} melebihi batas.",
+                            409,
+                            [
+                                'product_id' =>
+                                    $product->id,
+
+                                'modifier_group_id' =>
+                                    $group->id,
+
+                                'modifier_group_name' =>
+                                    $group->name,
+
+                                'selected_count' =>
+                                    $selectedCount,
+
+                                'min_select' =>
+                                    $minimum,
+
+                                'max_select' =>
+                                    $maximum,
+                            ]
+                        );
+                    }
+
+                    foreach (
+                        $selectedForGroup
+                        as $option
+                    ) {
+                        $priceDelta =
+                            (int)
+                            $option
+                                ->price_delta;
+
+                        $modifierDelta +=
+                            $priceDelta;
+
+                        $modifierSnapshots[] = [
+                            'modifier_group_id' =>
+                                $group->id,
+
+                            'modifier_option_id' =>
+                                $option->id,
+
+                            'group_name' =>
+                                $group->name,
+
+                            'option_name' =>
+                                $option->name,
+
+                            'price_delta' =>
+                                $priceDelta,
+                        ];
+                    }
+                }
+
+                /*
+                 * Final unit price hanya dihitung
+                 * dari data database.
+                 *
+                 * Frontend tidak pernah dipercaya
+                 * untuk harga modifier.
+                 */
+                $unitPrice =
+                    (int) $product->price
+                    + $modifierDelta;
+
+                $quantity =
+                    (int)
+                    $item['quantity'];
+
+                $subtotal =
+                    $unitPrice
+                    * $quantity;
+
+                $totalAmount +=
+                    $subtotal;
 
                 $resolvedItems[] = [
-                    'model' => $product,
-                    'product_id' => $product->id,
-                    'product_name' => $product->name,
-                    'product_image_url' => $product->image_url,
-                    'unit_price' => $product->price,
-                    'quantity' => $item['quantity'],
-                    'subtotal' => $subtotal,
+                    'product_id' =>
+                        $product->id,
+
+                    'product_name' =>
+                        $product->name,
+
+                    'product_image_url' =>
+                        $product->image_url,
+
+                    'unit_price' =>
+                        $unitPrice,
+
+                    'quantity' =>
+                        $quantity,
+
+                    'subtotal' =>
+                        $subtotal,
+
+                    'notes' =>
+                        $item['notes']
+                            ?? null,
+
+                    'modifiers' =>
+                        $modifierSnapshots,
                 ];
             }
 
@@ -322,28 +812,118 @@ class OrderController extends Controller
 
             /*
             |--------------------------------------------------------------------------
-            | Order Items + Stock
+            | Order Items + Modifier Snapshots
             |--------------------------------------------------------------------------
             */
 
-            foreach ($resolvedItems as $item) {
-                $orderItem = new OrderItem();
+            foreach (
+                $resolvedItems as $item
+            ) {
+                $orderItem =
+                    new OrderItem();
 
-                $orderItem->id = Str::uuid()->toString();
-                $orderItem->order_id = $order->id;
-                $orderItem->product_id = $item['product_id'];
-                $orderItem->product_name = $item['product_name'];
+                $orderItem->id =
+                    Str::uuid()
+                        ->toString();
+
+                $orderItem->order_id =
+                    $order->id;
+
+                $orderItem->product_id =
+                    $item['product_id'];
+
+                $orderItem->product_name =
+                    $item['product_name'];
+
                 $orderItem->product_image_url =
-                    $item['product_image_url'];
-                $orderItem->unit_price = $item['unit_price'];
-                $orderItem->quantity = $item['quantity'];
-                $orderItem->subtotal = $item['subtotal'];
+                    $item[
+                        'product_image_url'
+                    ];
+
+                /*
+                 * unit_price adalah FINAL unit
+                 * price setelah modifier.
+                 */
+                $orderItem->unit_price =
+                    $item['unit_price'];
+
+                $orderItem->quantity =
+                    $item['quantity'];
+
+                $orderItem->subtotal =
+                    $item['subtotal'];
+
+                $orderItem->notes =
+                    $item['notes'];
 
                 $orderItem->save();
 
-                $product = $item['model'];
+                foreach (
+                    $item['modifiers']
+                    as $modifier
+                ) {
+                    $snapshot =
+                        new OrderItemModifier();
 
-                $product->stock -= $item['quantity'];
+                    $snapshot->id =
+                        Str::uuid()
+                            ->toString();
+
+                    $snapshot->order_item_id =
+                        $orderItem->id;
+
+                    $snapshot->modifier_group_id =
+                        $modifier[
+                            'modifier_group_id'
+                        ];
+
+                    $snapshot->modifier_option_id =
+                        $modifier[
+                            'modifier_option_id'
+                        ];
+
+                    $snapshot->group_name =
+                        $modifier[
+                            'group_name'
+                        ];
+
+                    $snapshot->option_name =
+                        $modifier[
+                            'option_name'
+                        ];
+
+                    $snapshot->price_delta =
+                        $modifier[
+                            'price_delta'
+                        ];
+
+                    $snapshot->save();
+                }
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Aggregate Stock Decrement
+            |--------------------------------------------------------------------------
+            |
+            | Product yang sama hanya dikurangi
+            | satu kali setelah seluruh line
+            | berhasil dibuat.
+            |
+            */
+
+            foreach (
+                $requestedQuantities
+                as $productId => $quantity
+            ) {
+                $product =
+                    $products->get(
+                        $productId
+                    );
+
+                $product->stock -=
+                    (int) $quantity;
+
                 $product->save();
             }
 
@@ -459,6 +1039,8 @@ class OrderController extends Controller
                         'unit_price' => $item['unit_price'],
                         'quantity' => $item['quantity'],
                         'subtotal' => $item['subtotal'],
+                        'notes' => $item['notes'],
+                        'modifiers' => $item['modifiers'],
                     ])
                     ->values()
                     ->all(),
@@ -526,15 +1108,22 @@ class OrderController extends Controller
     private function fail(
         string $code,
         string $message,
-        int $status = 409
+        int $status = 409,
+        array $details = []
     ): never {
+        $error = [
+            'code' => $code,
+            'message' => $message,
+        ];
+
+        if ($details !== []) {
+            $error['details'] = $details;
+        }
+
         throw new HttpResponseException(
             response()->json([
                 'success' => false,
-                'error' => [
-                    'code' => $code,
-                    'message' => $message,
-                ],
+                'error' => $error,
             ], $status)
         );
     }

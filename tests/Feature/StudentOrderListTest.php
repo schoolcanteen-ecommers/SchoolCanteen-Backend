@@ -53,6 +53,10 @@ class StudentOrderListTest extends TestCase
         );
 
         Schema::dropIfExists(
+            'order_item_modifiers'
+        );
+
+        Schema::dropIfExists(
             'order_items'
         );
 
@@ -252,6 +256,47 @@ class StudentOrderListTest extends TestCase
                 $table->unsignedBigInteger(
                     'subtotal'
                 );
+
+                $table->string(
+                    'notes',
+                    120
+                )->nullable();
+
+                $table->timestamps();
+            }
+        );
+
+        Schema::create(
+            'order_item_modifiers',
+            function (Blueprint $table) {
+                $table->uuid('id')
+                    ->primary();
+
+                $table->uuid(
+                    'order_item_id'
+                );
+
+                $table->uuid(
+                    'modifier_group_id'
+                )->nullable();
+
+                $table->uuid(
+                    'modifier_option_id'
+                )->nullable();
+
+                $table->string(
+                    'group_name',
+                    100
+                );
+
+                $table->string(
+                    'option_name',
+                    100
+                );
+
+                $table->unsignedBigInteger(
+                    'price_delta'
+                )->default(0);
 
                 $table->timestamps();
             }
