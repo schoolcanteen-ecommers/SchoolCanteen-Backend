@@ -56,6 +56,16 @@ Route::prefix('v1')->group(function () {
     |--------------------------------------------------------------------------
     */
 
+    Route::get('/public/home', [
+        \App\Http\Controllers\Api\V1\PublicCatalogController::class,
+        'home',
+    ]);
+
+    Route::get('/public/catalog', [
+        \App\Http\Controllers\Api\V1\PublicCatalogController::class,
+        'catalog',
+    ]);
+
     Route::get('/products', [
         ProductController::class,
         'index',
