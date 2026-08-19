@@ -237,6 +237,10 @@ class StudentOrderListTest extends TestCase
                     'product_name'
                 );
 
+                $table->text(
+                    'product_image_url'
+                )->nullable();
+
                 $table->unsignedBigInteger(
                     'unit_price'
                 );
@@ -399,6 +403,9 @@ class StudentOrderListTest extends TestCase
                 'product_name' =>
                     'Nasi Goreng',
 
+                'product_image_url' =>
+                    'https://example.test/nasi-goreng.jpg',
+
                 'unit_price' =>
                     15000,
 
@@ -420,6 +427,8 @@ class StudentOrderListTest extends TestCase
 
                 'product_name' =>
                     'Produk Student B',
+
+                'product_image_url' => null,
 
                 'unit_price' =>
                     25000,
@@ -506,6 +515,10 @@ class StudentOrderListTest extends TestCase
             ->assertJsonPath(
                 'data.0.items.0.product_name',
                 'Nasi Goreng'
+            )
+            ->assertJsonPath(
+                'data.0.items.0.product_image_url',
+                'https://example.test/nasi-goreng.jpg'
             )
             ->assertJsonPath(
                 'data.0.items.0.quantity',
