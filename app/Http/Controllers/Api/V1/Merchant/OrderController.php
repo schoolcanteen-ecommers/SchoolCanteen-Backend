@@ -35,6 +35,8 @@ class OrderController extends Controller
             ->with([
                 'student',
                 'pickupSlot',
+                'items.modifiers',
+                'pickup',
             ])
             ->withCount('items')
             ->latest()
@@ -132,7 +134,7 @@ class OrderController extends Controller
         $merchantOrder->load([
             'student',
             'pickupSlot',
-            'items',
+            'items.modifiers',
             'pickup',
         ]);
 
@@ -167,7 +169,7 @@ class OrderController extends Controller
             ->with([
                 'student',
                 'pickupSlot',
-                'items',
+                'items.modifiers',
                 'pickup',
             ])
             ->first();

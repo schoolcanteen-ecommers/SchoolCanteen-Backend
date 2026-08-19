@@ -10,82 +10,130 @@ class MerchantOrderResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'order_code' => $this->order_code,
-            'status' => $this->status,
+            'id' =>
+                $this->id,
 
-            'total_amount' => (int) $this->total_amount,
-            'notes' => $this->notes,
+            'order_code' =>
+                $this->order_code,
 
-            'student' => $this->whenLoaded(
-                'student',
-                function () {
-                    return [
-                        'id' => $this->student->id,
-                        'name' => $this->student->name,
-                    ];
-                }
-            ),
+            'status' =>
+                $this->status,
 
-            'pickup_slot' => $this->whenLoaded(
-                'pickupSlot',
-                function () {
-                    if (!$this->pickupSlot) {
-                        return null;
-                    }
+            'total_amount' =>
+                (int) $this->total_amount,
 
-                    return [
-                        'id' => $this->pickupSlot->id,
-                        'start_at' => $this->pickupSlot->start_at?->toISOString(),
-                        'end_at' => $this->pickupSlot->end_at?->toISOString(),
-                    ];
-                }
-            ),
+            'notes' =>
+                $this->notes,
 
-            'items_count' => $this->whenCounted('items'), 
-
-            'items' => $this->whenLoaded(
-                'items',
-                function () {
-                    return $this->items->map(function ($item) {
+            'student' =>
+                $this->whenLoaded(
+                    'student',
+                    function () {
                         return [
-                            'id' => $item->id,
-                            'product_id' => $item->product_id,
-                            'product_name' => $item->product_name,
-                            'unit_price' => (int) $item->unit_price,
-                            'quantity' => (int) $item->quantity,
-                            'subtotal' => (int) $item->subtotal,
+                            'id' =>
+                                $this->student->id,
+
+                            'name' =>
+                                $this->student->name,
                         ];
-                    });
-                }
-            ),
-
-            'pickup' => $this->whenLoaded(
-                'pickup',
-                function () {
-                    if (!$this->pickup) {
-                        return null;
                     }
+                ),
 
-                    return [
-                        'token' => $this->pickup->pickup_token,
-                        'code' => $this->pickup->pickup_code,
-                        'status' => $this->pickup->status,
-                        'verified_at' => $this->pickup->verified_at?->toISOString(),
-                    ];
-                }
-            ),
+            'pickup_slot' =>
+                $this->whenLoaded(
+                    'pickupSlot',
+                    function () {
+                        if (!$this->pickupSlot) {
+                            return null;
+                        }
+
+                        return [
+                            'id' =>
+                                $this->pickupSlot->id,
+
+                            'start_at' =>
+                                $this->pickupSlot
+                                    ->start_at
+                                    ?->toISOString(),
+
+                            'end_at' =>
+                                $this->pickupSlot
+                                    ->end_at
+                                    ?->toISOString(),
+                        ];
+                    }
+                ),
+
+            'items_count' =>
+                $this->whenCounted(
+                    'items'
+                ),
+
+            'items' =>
+                OrderItemResource::collection(
+                    $this->whenLoaded(
+                        'items'
+                    )
+                ),
+
+            'pickup' =>
+                $this->whenLoaded(
+                    'pickup',
+                    function () {
+                        if (!$this->pickup) {
+                            return null;
+                        }
+
+                        return [
+                            'token' =>
+                                $this->pickup
+                                    ->pickup_token,
+
+                            'code' =>
+                                $this->pickup
+                                    ->pickup_code,
+
+                            'status' =>
+                                $this->pickup
+                                    ->status,
+
+                            'verified_at' =>
+                                $this->pickup
+                                    ->verified_at
+                                    ?->toISOString(),
+                        ];
+                    }
+                ),
 
             'timeline' => [
-                'confirmed_at' => $this->confirmed_at?->toISOString(),
-                'preparing_at' => $this->preparing_at?->toISOString(),
-                'ready_at' => $this->ready_at?->toISOString(),
-                'completed_at' => $this->completed_at?->toISOString(),
-                'cancelled_at' => $this->cancelled_at?->toISOString(),
+                'confirmed_at' =>
+                    $this->confirmed_at
+                        ?->toISOString(),
+
+                'preparing_at' =>
+                    $this->preparing_at
+                        ?->toISOString(),
+
+                'ready_at' =>
+                    $this->ready_at
+                        ?->toISOString(),
+
+                'completed_at' =>
+                    $this->completed_at
+                        ?->toISOString(),
+
+                'cancelled_at' =>
+                    $this->cancelled_at
+                        ?->toISOString(),
             ],
 
-            'created_at' => $this->created_at?->toISOString(),
-            'updated_at' => $this->updated_at?->toISOString(),
+            'created_at' =>
+                $this->created_at
+                    ?->toISOString(),
+
+            'updated_at' =>
+                $this->updated_at
+                    ?->toISOString(),
         ];
     }
 }
